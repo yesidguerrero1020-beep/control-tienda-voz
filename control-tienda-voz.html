@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>CONTROL TIENDA - VOZ</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#111827}
+main{max-width:520px;margin:auto;padding:22px 16px 30px}
+.card{background:white;border-radius:22px;padding:20px;box-shadow:0 8px 25px #00000012;margin-bottom:16px}
+h1{font-size:25px;margin:0 0 6px}p{color:#6b7280;margin:6px 0 0}
+button{width:100%;border:0;border-radius:16px;padding:16px;font-size:18px;font-weight:700;cursor:pointer}
+#hablar{background:#111827;color:white;margin-top:18px}
+#confirmar{background:#16a34a;color:white;margin-top:12px;display:none}
+#cancelar{background:#e5e7eb;color:#111827;margin-top:10px;display:none}
+#estado{margin-top:14px;text-align:center;font-weight:700}
+#texto{font-size:19px;line-height:1.5;margin-top:14px}
+.total{font-size:28px;font-weight:800;margin-top:15px}
+.small{font-size:13px;color:#6b7280;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>🏪 CONTROL TIENDA</h1>
+    <p>Registro de ventas por voz</p>
+    <button id="hablar">🎤 HABLAR</button>
+    <div id="estado">Listo para escuchar.</div>
+    <div id="texto"></div>
+    <div id="total" class="total"></div>
+    <button id="confirmar">✅ CONFIRMAR VENTA</button>
+    <button id="cancelar">↩️ CANCELAR</button>
+    <div class="small">Ejemplo: “2 arroces Diana, 1 aceite y 3 gaseosas”.</div>
+  </div>
+</main>
+
+<script>
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbxWiHjsIeI6EnlDXhIfhpc5KnknixxEGE6SDDnDp6rB-yc8JEaBG6iXqd-1Eqt_zZ1H/exec";
+
+const hablar=document.getElementById("hablar"), estado=document.getElementById("estado");
+const texto=document.getElementById("texto"), total=document.getElementById("total");
+const confirmar=document.getElementById("confirmar"), cancelar=document.getElementById("cancelar");
+
+let venta=[];
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){
+  estado.textContent="⚠️ Usa Chrome en Android para el botón de voz.";
+  hablar.disabled=true;
+}
+function normalizar(s){
+  return s.toLowerCase().replace(/[.,;]/g," ").replace(/\s+/g," ").trim();
+}
+const numeros={un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10};
+function parsear(frase){
+  frase=normalizar(frase).replace(/\by\b/g,",");
+  const partes=frase.split(",").map(x=>x.trim()).filter(Boolean);
+  return partes.map(p=>{
+    let m=p.match(/^(\d+)\s+(.+)$/);
+    if(!m){
+      const w=p.match(/^([a-záéíóúñ]+)\s+(.+)$/);
+      if(w && numeros[w[1]]) m=[null,String(numeros[w[1]]),w[2]];
+    }
+    return {cantidad:m?Number(m[1]):1, producto:(m?m[2]:p).trim()};
+  });
+}
+function mostrar(){
+  texto.innerHTML=venta.map(x=>`• ${x.cantidad} × ${x.producto}`).join("<br>");
+  total.textContent="";
+  confirmar.style.display=venta.length?"block":"none";
+  cancelar.style.display=venta.length?"block":"none";
+}
+hablar.onclick=()=>{
+  const r=new SR();
+  r.lang="es-CO"; r.interimResults=false; r.continuous=false;
+  estado.textContent="🎧 Escuchando...";
+  r.onresult=e=>{
+    const frase=e.results[0][0].transcript;
+    venta=parsear(frase);
+    estado.textContent="Esto entendí:";
+    mostrar();
+  };
+  r.onerror=e=>estado.textContent="⚠️ No pude escuchar. Intenta otra vez.";
+  r.onend=()=>{if(!venta.length) estado.textContent="Listo para escuchar.";};
+  r.start();
+};
+cancelar.onclick=()=>{
+  venta=[]; texto.innerHTML=""; total.textContent="";
+  confirmar.style.display="none"; cancelar.style.display="none";
+  estado.textContent="Venta cancelada. Listo.";
+};
+confirmar.onclick=async()=>{
+  confirmar.disabled=true; cancelar.disabled=true; estado.textContent="⏳ Registrando...";
+  try{
+    for(const x of venta){
+      const r=await fetch(ENDPOINT,{
+        method:"POST",
+        headers:{"Content-Type":"text/plain;charset=UTF-8"},
+        body:JSON.stringify({producto:x.producto,cantidad:x.cantidad,medioPago:"Efectivo"})
+      });
+      const data=await r.json();
+      if(!data.ok) throw new Error(data.mensaje||"Producto no encontrado");
+    }
+    estado.textContent="✅ Venta registrada correctamente.";
+    total.textContent="";
+    venta=[]; texto.innerHTML="";
+    confirmar.style.display="none"; cancelar.style.display="none";
+  }catch(e){
+    estado.textContent="❌ "+e.message;
+  }finally{
+    confirmar.disabled=false; cancelar.disabled=false;
+  }
+};
+</script>
+</body>
+</html>
