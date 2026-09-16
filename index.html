@@ -256,28 +256,52 @@ let recognition = null;
 
 let productos = [];
 
-let catalogo = [
-  {
-    nombre:"Arroz Zulia 1 kg",
-    precio:2800,
-    compra:2200
-  },
-  {
-    nombre:"Leche La Mejor",
-    precio:2500,
-    compra:2000
-  },
-  {
-    nombre:"Frutiño",
-    precio:1000,
-    compra:700
-  },
-  {
-    nombre:"Aceite ISA 1000 ml",
-    precio:6500,
-    compra:5500
-  }
-];
+let catalogo = [];
+
+const API_URL = "https://script.google.com/macros/s/AKfycbxWiHjsIeI6EnlDXhIfhpc5KnknixxEGE6SDDnDp6rB-yc8JEaBG6iXqd-1Eqt_zZ1H/exec";
+
+function cargarProductosDesdeSheets() {
+
+  const callbackName = "productosCallback_" + Date.now();
+
+  window[callbackName] = function(respuesta) {
+
+    if (!respuesta || !respuesta.ok) {
+      console.error("No se pudieron cargar los productos");
+      return;
+    }
+
+    catalogo = respuesta.productos.map(function(p) {
+
+      return {
+        nombre: p.producto,
+        precio: p.precioVenta,
+        compra: p.precioCompra,
+        categoria: p.categoria
+      };
+
+    });
+
+    console.log("Productos cargados:", catalogo.length);
+
+    delete window[callbackName];
+    script.remove();
+  };
+
+  const script = document.createElement("script");
+
+  script.src =
+    API_URL + "?callback=" + encodeURIComponent(callbackName);
+
+  script.onerror = function() {
+    console.error("Error conectando con Google Sheets");
+    delete window[callbackName];
+  };
+
+  document.body.appendChild(script);
+}
+
+cargarProductosDesdeSheets();;
 
 
 // --------------------------------
