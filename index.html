@@ -1,117 +1,716 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827">
-<title>index.html</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control Tienda</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#111827}
-main{max-width:520px;margin:auto;padding:22px 16px 30px}
-.card{background:white;border-radius:22px;padding:20px;box-shadow:0 8px 25px #00000012;margin-bottom:16px}
-h1{font-size:25px;margin:0 0 6px}p{color:#6b7280;margin:6px 0 0}
-button{width:100%;border:0;border-radius:16px;padding:16px;font-size:18px;font-weight:700;cursor:pointer}
-#hablar{background:#111827;color:white;margin-top:18px}
-#confirmar{background:#16a34a;color:white;margin-top:12px;display:none}
-#cancelar{background:#e5e7eb;color:#111827;margin-top:10px;display:none}
-#estado{margin-top:14px;text-align:center;font-weight:700}
-#texto{font-size:19px;line-height:1.5;margin-top:14px}
-.total{font-size:28px;font-weight:800;margin-top:15px}
-.small{font-size:13px;color:#6b7280;margin-top:8px}
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f3f4f6;
+  color:#111827;
+}
+
+.app{
+  max-width:520px;
+  margin:auto;
+  padding:20px 16px 30px;
+}
+
+.header{
+  text-align:center;
+  margin-bottom:18px;
+}
+
+.header h1{
+  margin:0;
+  font-size:28px;
+}
+
+.header p{
+  margin:6px 0 0;
+  color:#6b7280;
+}
+
+.card{
+  background:white;
+  border-radius:22px;
+  padding:20px;
+  box-shadow:0 8px 25px rgba(0,0,0,.08);
+  margin-bottom:16px;
+}
+
+.voice{
+  text-align:center;
+}
+
+.voice-button{
+  width:120px;
+  height:120px;
+  border-radius:50%;
+  border:0;
+  background:#111827;
+  color:white;
+  font-size:45px;
+  cursor:pointer;
+}
+
+.voice-button.active{
+  background:#16a34a;
+  animation:pulse 1.5s infinite;
+}
+
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(22,163,74,.5)}
+  70%{box-shadow:0 0 0 25px rgba(22,163,74,0)}
+  100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}
+}
+
+.status{
+  margin-top:15px;
+  font-weight:bold;
+}
+
+.transcript{
+  margin-top:12px;
+  color:#6b7280;
+  min-height:24px;
+}
+
+.products{
+  margin-top:10px;
+}
+
+.product{
+  border-bottom:1px solid #e5e7eb;
+  padding:14px 0;
+}
+
+.product:last-child{
+  border-bottom:0;
+}
+
+.product-name{
+  font-weight:bold;
+}
+
+.product-info{
+  display:flex;
+  justify-content:space-between;
+  margin-top:5px;
+  color:#6b7280;
+}
+
+.total{
+  display:flex;
+  justify-content:space-between;
+  font-size:22px;
+  font-weight:bold;
+  margin-top:15px;
+  padding-top:15px;
+  border-top:2px solid #e5e7eb;
+}
+
+.profit{
+  margin-top:8px;
+  text-align:right;
+  color:#16a34a;
+  font-weight:bold;
+}
+
+.buttons{
+  display:flex;
+  gap:10px;
+  margin-top:18px;
+}
+
+button.action{
+  flex:1;
+  border:0;
+  border-radius:14px;
+  padding:15px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.cancel{
+  background:#e5e7eb;
+  color:#111827;
+}
+
+.confirm{
+  background:#16a34a;
+  color:white;
+}
+
+.close{
+  width:100%;
+  margin-top:15px;
+  border:0;
+  border-radius:14px;
+  padding:15px;
+  background:#111827;
+  color:white;
+  font-size:17px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.hidden{
+  display:none;
+}
+
+.empty{
+  text-align:center;
+  color:#9ca3af;
+  padding:20px 0;
+}
 </style>
 </head>
+
 <body>
-<main>
-  <div class="card">
-    <h1>🏪 CONTROL TIENDA</h1>
-    <p>Registro de ventas por voz</p>
-    <button id="hablar">🎤 HABLAR</button>
-    <div id="estado">Listo para escuchar.</div>
-    <div id="texto"></div>
-    <div id="total" class="total"></div>
-    <button id="confirmar">✅ CONFIRMAR VENTA</button>
-    <button id="cancelar">↩️ CANCELAR</button>
-    <div class="small">Ejemplo: “2 arroces Diana, 1 aceite y 3 gaseosas”.</div>
+
+<div class="app">
+
+  <div class="header">
+    <h1>🛒 CONTROL TIENDA</h1>
+    <p>Tu tienda, más fácil con voz</p>
   </div>
-</main>
+
+  <div class="card voice">
+
+    <button id="voiceButton"
+            class="voice-button"
+            onclick="iniciarVenta()">
+      🎙️
+    </button>
+
+    <div id="status" class="status">
+      Toca para iniciar una venta
+    </div>
+
+    <div id="transcript" class="transcript"></div>
+
+  </div>
+
+  <div class="card">
+
+    <h2>Productos de la venta</h2>
+
+    <div id="products" class="products">
+      <div class="empty">
+        Todavía no hay productos
+      </div>
+    </div>
+
+    <div id="totalBox" class="hidden">
+
+      <div class="total">
+        <span>TOTAL</span>
+        <span id="total">$0</span>
+      </div>
+
+      <div class="profit">
+        Ganancia estimada:
+        <span id="profit">$0</span>
+      </div>
+
+    </div>
+
+    <button id="closeButton"
+            class="close hidden"
+            onclick="cerrarVenta()">
+      🛑 CERRAR VENTA
+    </button>
+
+    <div id="actions" class="buttons hidden">
+
+      <button class="action cancel"
+              onclick="cancelarVenta()">
+        ❌ Cancelar
+      </button>
+
+      <button class="action confirm"
+              onclick="confirmarVenta()">
+        ✅ Confirmar
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
 
 <script>
-const ENDPOINT = "https://script.google.com/macros/s/AKfycbxWiHjsIeI6EnlDXhIfhpc5KnknixxEGE6SDDnDp6rB-yc8JEaBG6iXqd-1Eqt_zZ1H/exec";
 
-const hablar=document.getElementById("hablar"), estado=document.getElementById("estado");
-const texto=document.getElementById("texto"), total=document.getElementById("total");
-const confirmar=document.getElementById("confirmar"), cancelar=document.getElementById("cancelar");
+let ventaActiva = false;
+let recognition = null;
 
-let venta=[];
+let productos = [];
 
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(!SR){
-  estado.textContent="⚠️ Usa Chrome en Android para el botón de voz.";
-  hablar.disabled=true;
-}
-function normalizar(s){
-  return s.toLowerCase().replace(/[.,;]/g," ").replace(/\s+/g," ").trim();
-}
-const numeros={un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10};
-function parsear(frase){
-  frase=normalizar(frase).replace(/\by\b/g,",");
-  const partes=frase.split(",").map(x=>x.trim()).filter(Boolean);
-  return partes.map(p=>{
-    let m=p.match(/^(\d+)\s+(.+)$/);
-    if(!m){
-      const w=p.match(/^([a-záéíóúñ]+)\s+(.+)$/);
-      if(w && numeros[w[1]]) m=[null,String(numeros[w[1]]),w[2]];
-    }
-    return {cantidad:m?Number(m[1]):1, producto:(m?m[2]:p).trim()};
-  });
-}
-function mostrar(){
-  texto.innerHTML=venta.map(x=>`• ${x.cantidad} × ${x.producto}`).join("<br>");
-  total.textContent="";
-  confirmar.style.display=venta.length?"block":"none";
-  cancelar.style.display=venta.length?"block":"none";
-}
-hablar.onclick=()=>{
-  const r=new SR();
-  r.lang="es-CO"; r.interimResults=false; r.continuous=false;
-  estado.textContent="🎧 Escuchando...";
-  r.onresult=e=>{
-    const frase=e.results[0][0].transcript;
-    venta=parsear(frase);
-    estado.textContent="Esto entendí:";
-    mostrar();
-  };
-  r.onerror=e=>estado.textContent="⚠️ No pude escuchar. Intenta otra vez.";
-  r.onend=()=>{if(!venta.length) estado.textContent="Listo para escuchar.";};
-  r.start();
-};
-cancelar.onclick=()=>{
-  venta=[]; texto.innerHTML=""; total.textContent="";
-  confirmar.style.display="none"; cancelar.style.display="none";
-  estado.textContent="Venta cancelada. Listo.";
-};
-confirmar.onclick=async()=>{
-  confirmar.disabled=true; cancelar.disabled=true; estado.textContent="⏳ Registrando...";
-  try{
-    for(const x of venta){
-      const r=await fetch(ENDPOINT,{
-        method:"POST",
-        headers:{"Content-Type":"text/plain;charset=UTF-8"},
-        body:JSON.stringify({producto:x.producto,cantidad:x.cantidad,medioPago:"Efectivo"})
-      });
-      const data=await r.json();
-      if(!data.ok) throw new Error(data.mensaje||"Producto no encontrado");
-    }
-    estado.textContent="✅ Venta registrada correctamente.";
-    total.textContent="";
-    venta=[]; texto.innerHTML="";
-    confirmar.style.display="none"; cancelar.style.display="none";
-  }catch(e){
-    estado.textContent="❌ "+e.message;
-  }finally{
-    confirmar.disabled=false; cancelar.disabled=false;
+let catalogo = [
+  {
+    nombre:"Arroz Zulia 1 kg",
+    precio:2800,
+    compra:2200
+  },
+  {
+    nombre:"Leche La Mejor",
+    precio:2500,
+    compra:2000
+  },
+  {
+    nombre:"Frutiño",
+    precio:1000,
+    compra:700
+  },
+  {
+    nombre:"Aceite ISA 1000 ml",
+    precio:6500,
+    compra:5500
   }
-};
+];
+
+
+// --------------------------------
+// INICIAR VENTA
+// --------------------------------
+
+function iniciarVenta(){
+
+  if(ventaActiva) return;
+
+  ventaActiva = true;
+
+  productos = [];
+
+  document.getElementById("voiceButton")
+    .classList.add("active");
+
+  document.getElementById("status")
+    .innerText = "🔴 Venta activa — puedes hablar";
+
+  document.getElementById("closeButton")
+    .classList.remove("hidden");
+
+  document.getElementById("actions")
+    .classList.add("hidden");
+
+  actualizarPantalla();
+
+  iniciarEscucha();
+}
+
+
+// --------------------------------
+// RECONOCIMIENTO DE VOZ
+// --------------------------------
+
+function iniciarEscucha(){
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if(!SpeechRecognition){
+
+    document.getElementById("status")
+      .innerText =
+      "Este navegador no soporta reconocimiento de voz.";
+
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+
+  recognition.lang = "es-CO";
+
+  recognition.continuous = false;
+
+  recognition.interimResults = true;
+
+  recognition.onresult = function(event){
+
+    let texto = "";
+
+    for(
+      let i = event.resultIndex;
+      i < event.results.length;
+      i++
+    ){
+
+      texto += event.results[i][0].transcript;
+
+    }
+
+    texto = texto.toLowerCase();
+
+    document.getElementById("transcript")
+      .innerText =
+      "Escuchando: " + texto;
+
+    if(texto.includes("cerrar venta")){
+
+      cerrarVenta();
+
+      return;
+    }
+
+    if(event.results[event.results.length-1].isFinal){
+
+      procesarTexto(texto);
+
+    }
+
+  };
+
+
+  recognition.onend = function(){
+
+    /*
+      IMPORTANTE:
+      Si la venta sigue activa,
+      volvemos a escuchar automáticamente.
+    */
+
+    if(ventaActiva){
+
+      setTimeout(function(){
+
+        iniciarEscucha();
+
+      },300);
+
+    }
+
+  };
+
+
+  recognition.onerror = function(){
+
+    if(ventaActiva){
+
+      setTimeout(function(){
+
+        iniciarEscucha();
+
+      },500);
+
+    }
+
+  };
+
+
+  recognition.start();
+}
+
+
+// --------------------------------
+// PROCESAR LO QUE DIJO EL USUARIO
+// --------------------------------
+
+function procesarTexto(texto){
+
+  for(let producto of catalogo){
+
+    let nombre =
+      producto.nombre.toLowerCase();
+
+    let palabraClave =
+      nombre.split(" ")[0];
+
+    if(texto.includes(palabraClave)){
+
+      let cantidad = obtenerCantidad(texto);
+
+      agregarProducto(
+        producto,
+        cantidad
+      );
+
+      return;
+    }
+
+  }
+
+}
+
+
+// --------------------------------
+// OBTENER CANTIDAD
+// --------------------------------
+
+function obtenerCantidad(texto){
+
+  const numeros = {
+
+    "un":1,
+    "una":1,
+    "uno":1,
+    "dos":2,
+    "tres":3,
+    "cuatro":4,
+    "cinco":5,
+    "seis":6,
+    "siete":7,
+    "ocho":8,
+    "nueve":9,
+    "diez":10
+
+  };
+
+  for(let palabra in numeros){
+
+    if(texto.includes(palabra)){
+
+      return numeros[palabra];
+
+    }
+
+  }
+
+  let numero = texto.match(/\d+/);
+
+  if(numero){
+
+    return parseInt(numero[0]);
+
+  }
+
+  return 1;
+}
+
+
+// --------------------------------
+// AGREGAR PRODUCTO
+// --------------------------------
+
+function agregarProducto(producto,cantidad){
+
+  let existente =
+    productos.find(
+      p => p.nombre === producto.nombre
+    );
+
+  if(existente){
+
+    existente.cantidad += cantidad;
+
+  }else{
+
+    productos.push({
+
+      nombre:producto.nombre,
+
+      cantidad:cantidad,
+
+      precio:producto.precio,
+
+      compra:producto.compra
+
+    });
+
+  }
+
+  actualizarPantalla();
+}
+
+
+// --------------------------------
+// ACTUALIZAR PANTALLA
+// --------------------------------
+
+function actualizarPantalla(){
+
+  const contenedor =
+    document.getElementById("products");
+
+  if(productos.length === 0){
+
+    contenedor.innerHTML =
+      '<div class="empty">Todavía no hay productos</div>';
+
+    document.getElementById("totalBox")
+      .classList.add("hidden");
+
+    return;
+  }
+
+  let html = "";
+
+  let total = 0;
+  let ganancia = 0;
+
+  productos.forEach(p => {
+
+    let subtotal =
+      p.precio * p.cantidad;
+
+    let gananciaProducto =
+      (p.precio - p.compra) *
+      p.cantidad;
+
+    total += subtotal;
+
+    ganancia += gananciaProducto;
+
+    html += `
+
+      <div class="product">
+
+        <div class="product-name">
+          ${p.nombre}
+        </div>
+
+        <div class="product-info">
+
+          <span>
+            × ${p.cantidad}
+          </span>
+
+          <span>
+            $${formato(p.precio)}
+          </span>
+
+          <strong>
+            $${formato(subtotal)}
+          </strong>
+
+        </div>
+
+      </div>
+
+    `;
+
+  });
+
+  contenedor.innerHTML = html;
+
+  document.getElementById("total")
+    .innerText =
+    "$" + formato(total);
+
+  document.getElementById("profit")
+    .innerText =
+    "$" + formato(ganancia);
+
+  document.getElementById("totalBox")
+    .classList.remove("hidden");
+
+}
+
+
+// --------------------------------
+// CERRAR VENTA
+// --------------------------------
+
+function cerrarVenta(){
+
+  if(!ventaActiva) return;
+
+  ventaActiva = false;
+
+  if(recognition){
+
+    recognition.stop();
+
+  }
+
+  document.getElementById("voiceButton")
+    .classList.remove("active");
+
+  document.getElementById("status")
+    .innerText =
+    "Venta lista para confirmar";
+
+  document.getElementById("closeButton")
+    .classList.add("hidden");
+
+  document.getElementById("actions")
+    .classList.remove("hidden");
+
+}
+
+
+// --------------------------------
+// CANCELAR
+// --------------------------------
+
+function cancelarVenta(){
+
+  ventaActiva = false;
+
+  if(recognition){
+
+    recognition.stop();
+
+  }
+
+  productos = [];
+
+  actualizarPantalla();
+
+  document.getElementById("actions")
+    .classList.add("hidden");
+
+  document.getElementById("closeButton")
+    .classList.add("hidden");
+
+  document.getElementById("voiceButton")
+    .classList.remove("active");
+
+  document.getElementById("status")
+    .innerText =
+    "Venta cancelada";
+
+}
+
+
+// --------------------------------
+// CONFIRMAR
+// --------------------------------
+
+function confirmarVenta(){
+
+  alert(
+    "Venta confirmada.\n\n" +
+    "Productos: " +
+    productos.length
+  );
+
+  productos = [];
+
+  actualizarPantalla();
+
+  document.getElementById("actions")
+    .classList.add("hidden");
+
+  document.getElementById("status")
+    .innerText =
+    "Venta registrada correctamente";
+
+}
+
+
+// --------------------------------
+// FORMATO DINERO
+// --------------------------------
+
+function formato(numero){
+
+  return numero.toLocaleString("es-CO");
+
+}
+
 </script>
+
 </body>
 </html>
